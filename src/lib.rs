@@ -55,6 +55,8 @@ use std::process;
 mod args;
 mod printer;
 
+pub use printer::{LineFormat, LinePrinter};
+
 pub use args::{Arguments, ColorSetting, FormatSetting};
 
 /// Description of a single test.
@@ -107,16 +109,18 @@ impl<D: Default> Test<D> {
     }
 }
 
+pub(crate) type FailureMsg = fn(&mut dyn LinePrinter);
+
 /// The outcome of performing a test.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub enum Outcome {
     /// The test passed.
     Passed,
 
     /// The test or benchmark failed (either compiler error or panicked).
     Failed {
-        /// A message that is shown after all tests have been run.
-        msg: Option<String>,
+        /// A message to print after all tests have been run.
+        msg: Option<FailureMsg>,
     },
 
     /// The test or benchmark was ignored.
@@ -129,6 +133,20 @@ pub enum Outcome {
         /// Variance in ns.
         variance: u64,
     },
+}
+
+impl std::fmt::Debug for Outcome {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let debug = match self {
+            Outcome::Passed => "Passed".into(),
+            Outcome::Failed { .. } => "Failed".into(),
+            Outcome::Ignored => "Ignored".into(),
+            Outcome::Measured { avg, variance } => {
+                format!("Measured {{ avg: {}, variance: {} }}", avg, variance)
+            }
+        };
+        write!(f, "{}", debug)
+    }
 }
 
 /// Event indicating that a given test has started running or has completed.

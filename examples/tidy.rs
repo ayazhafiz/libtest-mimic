@@ -1,6 +1,6 @@
 extern crate libtest_mimic;
 
-use libtest_mimic::{run_tests, Arguments, Outcome, Test};
+use libtest_mimic::{run_tests, Arguments, LineFormat, LinePrinter, Outcome, Test};
 
 use std::{
     env,
@@ -69,7 +69,10 @@ fn run_test(test: &Test<PathBuf>) -> Outcome {
     let content = match String::from_utf8(content) {
         Err(_) => {
             return Outcome::Failed {
-                msg: Some("The file's contents are not a valid UTF-8 string!".into()),
+                msg: Some(|printer: &mut dyn LinePrinter| {
+                    printer.print_line("File contents are not UTF-8!", &LineFormat::Failure);
+                    printer.print_line("UTF-8 is needed.", &LineFormat::Text);
+                }),
             };
         }
         Ok(s) => s,
@@ -78,21 +81,30 @@ fn run_test(test: &Test<PathBuf>) -> Outcome {
     // Check for `\r`: we only want `\n` line breaks!
     if content.contains('\r') {
         return Outcome::Failed {
-            msg: Some("Contains '\\r' chars. Please use ' \\n' line breaks only!".into()),
+            msg: Some(|printer: &mut dyn LinePrinter| {
+                printer.print_line("Contains '\\r' chars.", &LineFormat::Failure);
+                printer.print_line("Please use ' \\n' line breaks only!", &LineFormat::Failure);
+            }),
         };
     }
 
     // Check for tab characters `\t`
     if content.contains('\t') {
         return Outcome::Failed {
-            msg: Some("Contains tab characters ('\\t'). Indent with four spaces!".into()),
+            msg: Some(|printer: &mut dyn LinePrinter| {
+                printer.print_line("Contains tab characters ('\\t')", &LineFormat::Failure);
+                printer.print_line("Hint: indent with four spaces!", &LineFormat::Suggestion);
+            }),
         };
     }
 
     // Check for too long lines
     if content.lines().any(|line| line.chars().count() > 100) {
         return Outcome::Failed {
-            msg: Some("Contains lines longer than 100 codepoints!".into()),
+            msg: Some(|printer: &mut dyn LinePrinter| {
+                printer.print_line("Line is over 100 characters", &LineFormat::Failure);
+                printer.print_line("Hint: run rustfmt!", &LineFormat::Suggestion);
+            }),
         };
     }
 

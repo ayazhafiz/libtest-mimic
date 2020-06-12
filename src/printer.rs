@@ -10,7 +10,18 @@ use std::fs::File;
 
 use termcolor::{Ansi, Color, ColorChoice, ColorSpec, NoColor, StandardStream, WriteColor};
 
-use {Arguments, ColorSetting, Conclusion, FormatSetting, Outcome, Test};
+use {Arguments, ColorSetting, Conclusion, FailureMsg, FormatSetting, Outcome, Test};
+
+pub enum LineFormat {
+    Success,
+    Failure,
+    Text,
+    Suggestion,
+}
+
+pub trait LinePrinter {
+    fn print_line(&mut self, content: &str, format: &LineFormat);
+}
 
 pub(crate) struct Printer {
     out: Box<dyn WriteColor>,
@@ -203,7 +214,7 @@ impl Printer {
 
     /// Prints a list of failed tests with their messages. This is only called
     /// if there were any failures.
-    pub(crate) fn print_failures<D>(&mut self, fails: &[(Test<D>, Option<String>)]) {
+    pub(crate) fn print_failures<D>(&mut self, fails: &[(Test<D>, Option<FailureMsg>)]) {
         writeln!(self.out).unwrap();
         writeln!(self.out, "failures:").unwrap();
         writeln!(self.out).unwrap();
@@ -212,7 +223,7 @@ impl Printer {
         for (test, msg) in fails {
             writeln!(self.out, "---- {} ----", test.name).unwrap();
             if let Some(msg) = msg {
-                writeln!(self.out, "{}", msg).unwrap();
+                msg(self);
             }
             writeln!(self.out).unwrap();
         }
@@ -250,6 +261,14 @@ impl Printer {
     }
 }
 
+impl LinePrinter for Printer {
+    fn print_line(&mut self, content: &str, format: &LineFormat) {
+        self.out.set_color(&color_of_line_format(format)).unwrap();
+        writeln!(self.out, "{}", content).unwrap();
+        self.out.reset().unwrap();
+    }
+}
+
 /// Formats the given integer with `,` as thousand separator.
 pub fn fmt_with_thousand_sep(mut v: u64) -> String {
     let mut out = String::new();
@@ -272,5 +291,18 @@ fn color_of_outcome(outcome: &Outcome) -> ColorSpec {
         Outcome::Measured { .. } => Color::Cyan,
     };
     out.set_fg(Some(color));
+    out
+}
+
+/// Returns the `ColorSpec` associated with the given line format.
+fn color_of_line_format(format: &LineFormat) -> ColorSpec {
+    let mut out = ColorSpec::new();
+    let color = match format {
+        LineFormat::Text => None,
+        LineFormat::Success => Some(Color::Green),
+        LineFormat::Failure => Some(Color::Red),
+        LineFormat::Suggestion => Some(Color::Cyan),
+    };
+    out.set_fg(color);
     out
 }

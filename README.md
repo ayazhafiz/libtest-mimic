@@ -4,6 +4,7 @@ libtest-mimic
 This is a fork of LukasKalbertodt's libtest-mimic with the following modifications:
 
 - Support for running tests in a thread pool (https://github.com/LukasKalbertodt/libtest-mimic/pull/4)
+- Support for printing formatted failure messages
 
 ---
 
