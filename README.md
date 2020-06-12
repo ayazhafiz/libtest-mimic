@@ -1,5 +1,12 @@
 libtest-mimic
 =============
+
+This is a fork of LukasKalbertodt's libtest-mimic with the following modifications:
+
+- Support for running tests in a thread pool (https://github.com/LukasKalbertodt/libtest-mimic/pull/4)
+
+---
+
 [![Build Status](https://img.shields.io/travis/LukasKalbertodt/libtest-mimic/master.svg)](https://travis-ci.org/LukasKalbertodt/libtest-mimic)
 [![crates.io version](https://img.shields.io/crates/v/libtest-mimic.svg)](https://crates.io/crates/libtest-mimic)
 [![docs](https://docs.rs/libtest-mimic/badge.svg)](https://docs.rs/libtest-mimic)

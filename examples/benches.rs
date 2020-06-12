@@ -1,7 +1,6 @@
 extern crate libtest_mimic;
 
-use libtest_mimic::{Arguments, Test, Outcome, run_tests};
-
+use libtest_mimic::{run_tests, Arguments, Outcome, Test};
 
 fn main() {
     let args = Arguments::from_args();
@@ -33,5 +32,6 @@ fn main() {
     run_tests(&args, tests, |test| {
         let (avg, variance) = test.data;
         Outcome::Measured { avg, variance }
-    }).exit();
+    })
+    .exit();
 }

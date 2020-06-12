@@ -1,7 +1,6 @@
 extern crate libtest_mimic;
 
-use libtest_mimic::{Arguments, Test, Outcome, run_tests};
-
+use libtest_mimic::{run_tests, Arguments, Outcome, Test};
 
 fn main() {
     let args = Arguments::from_args();
@@ -28,9 +27,12 @@ fn main() {
 
     run_tests(&args, tests, |test| {
         if test.name == "sokka" {
-            Outcome::Failed { msg: Some("Sokka tripped and fell :(".into()) }
+            Outcome::Failed {
+                msg: Some("Sokka tripped and fell :(".into()),
+            }
         } else {
             Outcome::Passed
         }
-    }).exit();
+    })
+    .exit();
 }

@@ -1,7 +1,6 @@
 extern crate libtest_mimic;
 
-use libtest_mimic::{Arguments, Test, Outcome, run_tests};
-
+use libtest_mimic::{run_tests, Arguments, Outcome, Test};
 
 fn main() {
     // Parse CLI args
@@ -9,14 +8,12 @@ fn main() {
 
     // Generate 100 tests with dummy names
     let tests = (0..100)
-        .map(|i| {
-            Test {
-                name: format!("test-{:03}", i),
-                kind: String::new(),
-                is_ignored: i % 23 == 0,
-                is_bench: false,
-                data: i,
-            }
+        .map(|i| Test {
+            name: format!("test-{:03}", i),
+            kind: String::new(),
+            is_ignored: i % 23 == 0,
+            is_bench: false,
+            data: i,
         })
         .collect::<Vec<_>>();
 
@@ -28,5 +25,6 @@ fn main() {
         } else {
             Outcome::Passed
         }
-    }).exit();
+    })
+    .exit();
 }

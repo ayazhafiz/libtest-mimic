@@ -1,6 +1,6 @@
 extern crate libtest_mimic;
 
-use libtest_mimic::{Arguments, Test, Outcome, run_tests};
+use libtest_mimic::{run_tests, Arguments, Outcome, Test};
 
 use std::{
     env,
@@ -9,7 +9,6 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
-
 
 fn main() {
     let args = Arguments::from_args();
