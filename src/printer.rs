@@ -7,6 +7,7 @@
 //! - `logfile`
 
 use std::fs::File;
+use std::sync::{Arc, Mutex};
 
 use termcolor::{Ansi, Color, ColorChoice, ColorSpec, NoColor, StandardStream, WriteColor};
 
@@ -214,7 +215,10 @@ impl Printer {
 
     /// Prints a list of failed tests with their messages. This is only called
     /// if there were any failures.
-    pub(crate) fn print_failures<D>(&mut self, fails: &[(Test<D>, Option<FailureMsg>)]) {
+    pub(crate) fn print_failures<D>(
+        &mut self,
+        fails: &[(Test<D>, Option<Arc<Mutex<FailureMsg>>>)],
+    ) {
         writeln!(self.out).unwrap();
         writeln!(self.out, "failures:").unwrap();
         writeln!(self.out).unwrap();
@@ -223,7 +227,7 @@ impl Printer {
         for (test, msg) in fails {
             writeln!(self.out, "---- {} ----", test.name).unwrap();
             if let Some(msg) = msg {
-                msg(self);
+                msg.lock().unwrap()(self);
             }
             writeln!(self.out).unwrap();
         }

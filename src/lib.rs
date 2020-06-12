@@ -51,6 +51,7 @@ extern crate termcolor;
 
 use rayon::prelude::*;
 use std::process;
+use std::sync::{Arc, Mutex};
 
 mod args;
 mod printer;
@@ -109,10 +110,9 @@ impl<D: Default> Test<D> {
     }
 }
 
-pub(crate) type FailureMsg = fn(&mut dyn LinePrinter);
+pub(crate) type FailureMsg = dyn Fn(&mut dyn LinePrinter);
 
 /// The outcome of performing a test.
-#[derive(Clone)]
 pub enum Outcome {
     /// The test passed.
     Passed,
@@ -120,7 +120,7 @@ pub enum Outcome {
     /// The test or benchmark failed (either compiler error or panicked).
     Failed {
         /// A message to print after all tests have been run.
-        msg: Option<FailureMsg>,
+        msg: Option<Arc<Mutex<FailureMsg>>>,
     },
 
     /// The test or benchmark was ignored.
@@ -134,6 +134,8 @@ pub enum Outcome {
         variance: u64,
     },
 }
+
+unsafe impl Send for Outcome {}
 
 impl std::fmt::Debug for Outcome {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

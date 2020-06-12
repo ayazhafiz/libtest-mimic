@@ -8,6 +8,7 @@ use std::{
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
+    sync::{Arc, Mutex},
 };
 
 fn main() {
@@ -68,11 +69,18 @@ fn run_test(test: &Test<PathBuf>) -> Outcome {
     // Check that the file is valid UTF-8
     let content = match String::from_utf8(content) {
         Err(_) => {
+            let content_type = "UTF-8";
             return Outcome::Failed {
-                msg: Some(|printer: &mut dyn LinePrinter| {
-                    printer.print_line("File contents are not UTF-8!", &LineFormat::Failure);
-                    printer.print_line("UTF-8 is needed.", &LineFormat::Text);
-                }),
+                msg: Some(Arc::new(Mutex::new(
+                    move |printer: &mut dyn LinePrinter| {
+                        printer.print_line(
+                            &format!("File contents are not {}!", content_type),
+                            &LineFormat::Failure,
+                        );
+                        printer
+                            .print_line(&format!("{} is needed.", content_type), &LineFormat::Text);
+                    },
+                ))),
             };
         }
         Ok(s) => s,
@@ -81,30 +89,30 @@ fn run_test(test: &Test<PathBuf>) -> Outcome {
     // Check for `\r`: we only want `\n` line breaks!
     if content.contains('\r') {
         return Outcome::Failed {
-            msg: Some(|printer: &mut dyn LinePrinter| {
+            msg: Some(Arc::new(Mutex::new(|printer: &mut dyn LinePrinter| {
                 printer.print_line("Contains '\\r' chars.", &LineFormat::Failure);
                 printer.print_line("Please use ' \\n' line breaks only!", &LineFormat::Failure);
-            }),
+            }))),
         };
     }
 
     // Check for tab characters `\t`
     if content.contains('\t') {
         return Outcome::Failed {
-            msg: Some(|printer: &mut dyn LinePrinter| {
+            msg: Some(Arc::new(Mutex::new(|printer: &mut dyn LinePrinter| {
                 printer.print_line("Contains tab characters ('\\t')", &LineFormat::Failure);
                 printer.print_line("Hint: indent with four spaces!", &LineFormat::Suggestion);
-            }),
+            }))),
         };
     }
 
     // Check for too long lines
     if content.lines().any(|line| line.chars().count() > 100) {
         return Outcome::Failed {
-            msg: Some(|printer: &mut dyn LinePrinter| {
+            msg: Some(Arc::new(Mutex::new(|printer: &mut dyn LinePrinter| {
                 printer.print_line("Line is over 100 characters", &LineFormat::Failure);
                 printer.print_line("Hint: run rustfmt!", &LineFormat::Suggestion);
-            }),
+            }))),
         };
     }
 
