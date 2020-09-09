@@ -110,10 +110,7 @@ impl<D: Default> Test<D> {
     }
 }
 
-pub(crate) type FailureMsg = dyn Fn(&mut dyn LinePrinter);
-
-unsafe impl Send for FailureMsg {}
-unsafe impl Sync for FailureMsg {}
+pub(crate) type FailureMsg = dyn Fn(&mut dyn LinePrinter) + Send + Sync;
 
 /// The outcome of performing a test.
 pub enum Outcome {
